@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" ng-app='myApp'>
+<head>
+	<meta charset="UTF-8">
+	<title>Index</title>
+	<script type="text/javascript" src="/angular.js"></script>
+	<script type="text/javascript" src="/angular-routes.js"></script>
+	<script type="text/javascript">
+
+// Module
+var myAppModule = angular.module('myApp', ['ngRoute']);
+
+// Routes
+myAppModule.config(function($routeProvider){
+	$routeProvider
+	.when('/', {
+		redirectTo: "/customers"
+	})
+	.when('/customers', {
+		templateUrl: "partials/customers.partial.html",
+		controller: "customersController",
+		controllerAs: "customersCtrl"
+	})
+	.when('/customers/:id', {
+		templateUrl: "partials/customerDetails.partial.html",
+		controller: "customerDetailsController",
+		controllerAs: "customerCtrl"
+	})
+})
+
+// Customers Controller
+myAppModule.controller('customersController', function(customerFactory){
+	console.log("customersController Loaded...")
+	var _this = this;
+
+	// Get all Customers
+	function retrieveAll(){
+		console.log(1)
+		customerFactory.retrieveAll(function(customers){
+			console.log(6)
+			_this.customers = customers;
+		})
+	}
+	retrieveAll();
+
+	// Create Customer
+	this.create = function(newCustomer){
+		console.log("customersController - Create", newCustomer)
+		customerFactory.create(newCustomer, function(err){
+			_this.errors = err;
+			retrieveAll();
+		});
+
+		this.newCustomer = {};
+	}
+
+	// Destroy Customer
+	this.destroy = function(customer){
+		customerFactory.destroy(customer, retrieveAll)
+	}
+
+});
+
+// Customer Details Controller
+myAppModule.controller('customerDetailsController', function($routeParams, customerFactory){
+	var _this = this;
+
+	customerFactory.retrieveOne($routeParams.id, function(customer){
+		console.log("BACK FROM FACTORY ", customer)
+		_this.customer = customer;
+	})
+
+	this.update = function(user){
+		customerFactory.update(user, function(){
+			console.log("back in controller, done")
+		})
+	}
+})
+
+
+
+// Customer Factory
+myAppModule.factory('customerFactory', function ($http, $location){
+	var factory = {};
+
+
+	factory.update = function(user, callback){
+		$http.put('/customers/'+user._id, user).success(function(response){
+			console.log("Back in factory - update: ", response);
+			$location.path('/customers')
+			callback();
+		})
+	}
+
+	factory.retrieveOne = function(id, callback){
+		console.log('in factory', id)
+		$http.get('/customers/'+id).success(function(response){
+			console.log("BACK FORM SERVER ", response)
+			callback(response);
+		})
+	}
+	// Retrieve All
+	factory.retrieveAll = function(callback){
+		console.log(2)
+		$http.get('/customers')
+		.success(function(customers){
+			console.log(5)
+			callback(customers)
+		})
+	}
+
+	// Create
+	factory.create = function(newCustomer, callback){
+		console.log("customerFactory - Create", newCustomer)
+		$http.post('/customers', newCustomer)
+		.success(function(err){
+			console.log("customerFactory - Create - Response", err)
+			callback(err);
+		})
+	}
+
+	// Destroy delete '/customers/5'
+	factory.destroy = function(customer, callback){
+		$http.delete('/customers/'+customer._id)
+		.success(function(response){
+			callback();
+		})
+	}
+
+	return factory;
+});
+
+
+	</script>
+</head>
+<body>
+	
+	<a href="#/customers">Customers</a>
+	<div ng-view></div>
+
+</body>
+</html>

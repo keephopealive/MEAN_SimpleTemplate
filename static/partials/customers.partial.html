@@ -1,0 +1,22 @@
+<h1>Customer's Partial</h1>
+
+<li ng-repeat='customer in customersCtrl.customers track by $index'>
+	<a href="#/customers/{{customer._id}}">
+		<span ng-bind='customer.name'></span>
+	</a>
+	<button ng-click='customersCtrl.destroy(customer)'>Remove</button>
+</li>
+
+<h3 ng-repeat="error in customersCtrl.errors">{{error.message}}</h3>
+
+<form>
+	<label>
+		Name: 
+		<input type='text' ng-model='customersCtrl.newCustomer.name'>
+	</label>
+
+	<input 
+	type='submit' 
+	value='add new student' 
+	ng-click='customersCtrl.create(customersCtrl.newCustomer)'>
+</form>
